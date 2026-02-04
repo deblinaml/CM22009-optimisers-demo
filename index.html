@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CM22009 - Optimization Visualizations</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f1a 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+            padding: 3rem 2rem;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #00d4ff, #7c3aed, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 3rem;
+        }
+        
+        .viz-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+        
+        .viz-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 1rem;
+            align-items: center;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s;
+        }
+        
+        .viz-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        .viz-content h2 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: #fff;
+        }
+        
+        .viz-content p {
+            font-size: 0.9rem;
+            color: #888;
+            line-height: 1.5;
+        }
+        
+        .viz-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .badge-1 { background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(124, 58, 237, 0.2)); color: #00d4ff; }
+        .badge-2 { background: linear-gradient(135deg, rgba(255, 107, 107, 0.2), rgba(254, 202, 87, 0.2)); color: #feca57; }
+        .badge-3 { background: linear-gradient(135deg, rgba(0, 206, 201, 0.2), rgba(108, 92, 231, 0.2)); color: #00cec9; }
+        .badge-4 { background: linear-gradient(135deg, rgba(88, 166, 255, 0.2), rgba(247, 120, 186, 0.2)); color: #f778ba; }
+        
+        .instructions {
+            margin-top: 3rem;
+            background: rgba(124, 58, 237, 0.1);
+            border: 1px solid rgba(124, 58, 237, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        
+        .instructions h3 {
+            color: #a78bfa;
+            margin-bottom: 1rem;
+        }
+        
+        .instructions ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .instructions li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            font-size: 0.9rem;
+            color: #bbb;
+        }
+        
+        .instructions li::before {
+            content: '→';
+            color: #7c3aed;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CM22009: Optimization Visualizations</h1>
+        <p class="subtitle">Interactive demonstrations for the Machine Learning course</p>
+        
+        <div class="viz-grid">
+            <a href="gradient_descent_interactive.html" class="viz-card">
+                <div class="viz-content">
+                    <h2>Interactive Gradient Descent</h2>
+                    <p>Explore how gradient descent navigates different loss surfaces. Click to set starting points, adjust learning rates, and watch the algorithm descend. Includes 2D contour and 3D surface views.</p>
+                </div>
+                <span class="viz-badge badge-1">Core Concept</span>
+            </a>
+            
+            <a href="sgd_comparison.html" class="viz-card">
+                <div class="viz-content">
+                    <h2>SGD vs Full-Batch Comparison</h2>
+                    <p>See how stochastic gradient descent uses mini-batches and why the added noise can help escape local minima. Watch both algorithms run side-by-side with epoch tracking.</p>
+                </div>
+                <span class="viz-badge badge-2">SGD & Epochs</span>
+            </a>
+            
+            <a href="convex_nonconvex.html" class="viz-card">
+                <div class="viz-content">
+                    <h2>Convex vs Non-Convex Explorer</h2>
+                    <p>Understand convexity through the second derivative test. Drag your mouse to see curvature at each point. Click to run gradient descent and observe how starting point affects convergence.</p>
+                </div>
+                <span class="viz-badge badge-3">Convexity</span>
+            </a>
+            
+            <a href="momentum_adam.html" class="viz-card">
+                <div class="viz-content">
+                    <h2>Momentum & Adam Optimizer Race</h2>
+                    <p>Compare vanilla gradient descent, momentum, and Adam side-by-side on challenging loss landscapes. See how momentum smooths oscillations and Adam adapts learning rates.</p>
+                </div>
+                <span class="viz-badge badge-4">Advanced</span>
+            </a>
+        </div>
+        
+        <div class="instructions">
+            <h3>How to Use These Visualizations</h3>
+            <ul>
+                <li> Open these in full screen. Use the controls to show what happens with different parameters.</li>
+                <li><strong>Student Self-Study:</strong> PLay with the different parameters. Try edge cases.</li>
+                <li><strong>Key Experiments:</strong> Try very high/low learning rates, compare behaviour on convex vs non-convex functions, observe how momentum helps in narrow valleys (You can try momentum after the next Wednesday lecture).</li>
+                <li><strong>Discussion Points:</strong> Why does SGD sometimes find better solutions? When does Adam outperform momentum? What makes a function hard to optimize? </li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
