@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convex vs Non-Convex Functions - Interactive Explorer</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #eee;
+        }
+        
+        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+        
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #00cec9, #6c5ce7, #fd79a8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle { text-align: center; color: #888; margin-bottom: 2rem; }
+        
+        .main-area { display: grid; grid-template-columns: 300px 1fr; gap: 2rem; }
+        
+        .sidebar { display: flex; flex-direction: column; gap: 1rem; }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 1.25rem;
+        }
+        
+        .card-title {
+            font-size: 0.85rem; font-weight: 600; color: #00cec9;
+            text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;
+        }
+        
+        .function-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        
+        .function-btn {
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            color: #ccc;
+            font-family: inherit;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+        }
+        
+        .function-btn:hover { background: rgba(255, 255, 255, 0.08); }
+        
+        .function-btn.active {
+            background: linear-gradient(135deg, rgba(0, 206, 201, 0.2), rgba(108, 92, 231, 0.2));
+            border-color: #00cec9;
+            color: #fff;
+        }
+        
+        .function-btn.convex { border-left: 3px solid #00cec9; }
+        .function-btn.non-convex { border-left: 3px solid #fd79a8; }
+        
+        .function-tag {
+            font-size: 0.65rem; padding: 0.1rem 0.35rem; border-radius: 4px;
+            margin-left: 0.5rem; font-weight: 500;
+        }
+        
+        .function-tag.convex { background: rgba(0, 206, 201, 0.2); color: #00cec9; }
+        .function-tag.non-convex { background: rgba(253, 121, 168, 0.2); color: #fd79a8; }
+        
+        .property-list { display: flex; flex-direction: column; gap: 0.75rem; }
+        
+        .property {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.5rem; background: rgba(0, 0, 0, 0.2); border-radius: 8px;
+        }
+        
+        .property-label { font-size: 0.85rem; color: #999; }
+        .property-value { font-family: 'Fira Code', monospace; font-size: 0.85rem; font-weight: 500; }
+        .property-value.yes { color: #00cec9; }
+        .property-value.no { color: #fd79a8; }
+        
+        .viz-area { display: flex; flex-direction: column; gap: 1rem; }
+        
+        .canvas-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            padding: 1rem;
+            position: relative;
+        }
+        
+        canvas { width: 100%; height: 400px; border-radius: 12px; background: #0a0a15; }
+        
+        .canvas-label {
+            position: absolute; top: 1.5rem; left: 1.5rem;
+            font-size: 0.8rem; color: #666;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 0.25rem 0.5rem; border-radius: 4px;
+        }
+        
+        .explanation-box {
+            background: linear-gradient(135deg, rgba(108, 92, 231, 0.1), rgba(0, 206, 201, 0.1));
+            border: 1px solid rgba(108, 92, 231, 0.2);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+        
+        .explanation-box h3 { color: #6c5ce7; font-size: 1rem; margin-bottom: 0.75rem; }
+        .explanation-box p { font-size: 0.9rem; line-height: 1.6; color: #bbb; }
+        
+        .explanation-box code {
+            font-family: 'Fira Code', monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.1rem 0.3rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: #00cec9;
+        }
+        
+        .math-formula {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            font-family: 'Fira Code', monospace;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+        
+        .test-section {
+            margin-top: 1rem; padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .test-title { font-size: 0.85rem; color: #6c5ce7; margin-bottom: 0.5rem; }
+        
+        .second-derivative { display: flex; align-items: center; gap: 1rem; }
+        
+        .derivative-display {
+            flex: 1; height: 40px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .derivative-bar { height: 100%; transition: width 0.1s; position: absolute; }
+        .derivative-bar.positive { background: linear-gradient(90deg, rgba(0, 206, 201, 0.3), #00cec9); left: 50%; }
+        .derivative-bar.negative { background: linear-gradient(270deg, rgba(253, 121, 168, 0.3), #fd79a8); right: 50%; }
+        
+        .derivative-value { font-family: 'Fira Code', monospace; font-size: 0.9rem; min-width: 100px; text-align: right; }
+        
+        .instructions { font-size: 0.8rem; color: #666; margin-top: 0.5rem; }
+        
+        .derivative-zero {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        @media (max-width: 900px) { .main-area { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Convex vs Non-Convex Functions</h1>
+        <p class="subtitle">Explore why convexity matters for optimization - drag your mouse across the graph!</p>
+        
+        <div class="main-area">
+            <div class="sidebar">
+                <div class="card">
+                    <div class="card-title">Select Function</div>
+                    <div class="function-list" id="functionList"></div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">Properties</div>
+                    <div class="property-list">
+                        <div class="property">
+                            <span class="property-label">Convex?</span>
+                            <span class="property-value" id="isConvex">—</span>
+                        </div>
+                        <div class="property">
+                            <span class="property-label">Global Minimum</span>
+                            <span class="property-value" id="globalMin">—</span>
+                        </div>
+                        <div class="property">
+                            <span class="property-label">Local Minima</span>
+                            <span class="property-value" id="localMinima">—</span>
+                        </div>
+                        <div class="property">
+                            <span class="property-label">Saddle Points</span>
+                            <span class="property-value" id="saddlePoints">—</span>
+                        </div>
+                    </div>
+                    
+                    <div class="test-section">
+                        <div class="test-title">Second Derivative Test (at cursor)</div>
+                        <div class="second-derivative">
+                            <div class="derivative-display">
+                                <div class="derivative-zero"></div>
+                                <div class="derivative-bar positive" id="posBar" style="width: 0%"></div>
+                                <div class="derivative-bar negative" id="negBar" style="width: 0%"></div>
+                            </div>
+                            <div class="derivative-value" id="derivValue">f''(x) = —</div>
+                        </div>
+                        <p class="instructions">Convex: f''(x) ≥ 0 everywhere. Non-convex: f''(x) &lt; 0 somewhere.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="viz-area">
+                <div class="canvas-container">
+                    <canvas id="mainCanvas"></canvas>
+                    <div class="canvas-label">Hover to see curvature • Click to start gradient descent</div>
+                </div>
+                
+                <div class="explanation-box">
+                    <h3 id="funcName">Function Name</h3>
+                    <div class="math-formula" id="funcFormula">f(x) = x²</div>
+                    <p id="funcExplanation">Explanation text here.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('mainCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Functions database
+        const functions = {
+            quadratic: {
+                name: 'Quadratic (Parabola)',
+                formula: 'f(x) = x²',
+                fn: x => x * x,
+                dfn: x => 2 * x,
+                d2fn: x => 2,
+                range: [-3, 3],
+                convex: true,
+                explanation: 'The simplest convex function. The second derivative is always 2 (positive), so gradient descent from any starting point will reach the global minimum at x=0.',
+                globalMin: 'x = 0',
+                localMinima: '1 (global)',
+                saddles: '0'
+            },
+            cubic: {
+                name: 'Cubic Function',
+                formula: 'f(x) = x³ - 3x',
+                fn: x => x*x*x - 3*x,
+                dfn: x => 3*x*x - 3,
+                d2fn: x => 6*x,
+                range: [-2.5, 2.5],
+                convex: false,
+                explanation: 'A non-convex function. The second derivative is 6x, which is negative for x < 0 (concave region) and positive for x > 0 (convex region). Has a local maximum at x = -1 and a local minimum at x = 1.',
+                globalMin: 'x → +∞',
+                localMinima: '1 (at x=1)',
+                saddles: '0'
+            },
+            sinusoidal: {
+                name: 'Sinusoidal',
+                formula: 'f(x) = x²/4 + 2·sin(x)',
+                fn: x => x*x/4 + 2*Math.sin(x),
+                dfn: x => x/2 + 2*Math.cos(x),
+                d2fn: x => 0.5 - 2*Math.sin(x),
+                range: [-6, 6],
+                convex: false,
+                explanation: 'A wavy function with multiple local minima. The quadratic term provides an overall "bowl" shape, but the sine term creates oscillations. Gradient descent may get stuck in local minima depending on the starting point.',
+                globalMin: 'x ≈ -1.9',
+                localMinima: '3',
+                saddles: '0'
+            },
+            doubleWell: {
+                name: 'Double Well (Quartic)',
+                formula: 'f(x) = x⁴ - 2x²',
+                fn: x => Math.pow(x, 4) - 2*x*x,
+                dfn: x => 4*Math.pow(x, 3) - 4*x,
+                d2fn: x => 12*x*x - 4,
+                range: [-2, 2],
+                convex: false,
+                explanation: 'A classic "double well" potential with two global minima at x = ±1 and a local maximum at x = 0. The second derivative is negative near x = 0, creating a non-convex region.',
+                globalMin: 'x = ±1',
+                localMinima: '2 (both global)',
+                saddles: '1 (at x=0)'
+            },
+            exponential: {
+                name: 'Exponential',
+                formula: 'f(x) = eˣ',
+                fn: x => Math.exp(x),
+                dfn: x => Math.exp(x),
+                d2fn: x => Math.exp(x),
+                range: [-3, 2],
+                convex: true,
+                explanation: 'A strictly convex function - the second derivative (eˣ) is always positive. However, it has no minimum! Gradient descent will run towards -∞. This shows why convexity alone doesn\'t guarantee convergence.',
+                globalMin: 'None (→ -∞)',
+                localMinima: '0',
+                saddles: '0'
+            },
+            absoluteValue: {
+                name: 'Absolute Value',
+                formula: 'f(x) = |x|',
+                fn: x => Math.abs(x),
+                dfn: x => x > 0 ? 1 : (x < 0 ? -1 : 0),
+                d2fn: x => 0,
+                range: [-3, 3],
+                convex: true,
+                explanation: 'A convex but non-differentiable function. The second derivative is 0 everywhere except at the origin where it\'s undefined. This is a boundary case that is still convex (satisfies the definition) but requires special optimization techniques (subgradients).',
+                globalMin: 'x = 0',
+                localMinima: '1 (global)',
+                saddles: '0'
+            },
+            rastrigin1D: {
+                name: 'Rastrigin (1D)',
+                formula: 'f(x) = 10 + x² - 10·cos(2πx)',
+                fn: x => 10 + x*x - 10*Math.cos(2*Math.PI*x),
+                dfn: x => 2*x + 20*Math.PI*Math.sin(2*Math.PI*x),
+                d2fn: x => 2 + 40*Math.PI*Math.PI*Math.cos(2*Math.PI*x),
+                range: [-3, 3],
+                convex: false,
+                explanation: 'A highly non-convex function with many local minima. Used as a benchmark for optimization algorithms. Standard gradient descent almost always gets trapped in a local minimum. This motivates techniques like SGD with momentum or simulated annealing.',
+                globalMin: 'x = 0',
+                localMinima: '~6 in range',
+                saddles: '0'
+            }
+        };
+        
+        let currentFunc = 'quadratic';
+        let mouseX = null;
+        let gdPath = [];
+        let gdRunning = false;
+        let gdPhi = null;
+        
+        function setupCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+        }
+        
+        function toScreen(x, y, width, height, xRange, yRange) {
+            return {
+                x: (x - xRange[0]) / (xRange[1] - xRange[0]) * width,
+                y: height - (y - yRange[0]) / (yRange[1] - yRange[0]) * height
+            };
+        }
+        
+        function fromScreen(sx, sy, width, height, xRange, yRange) {
+            return {
+                x: xRange[0] + sx / width * (xRange[1] - xRange[0]),
+                y: yRange[0] + (height - sy) / height * (yRange[1] - yRange[0])
+            };
+        }
+        
+        function render() {
+            const rect = canvas.getBoundingClientRect();
+            const width = rect.width;
+            const height = rect.height;
+            const func = functions[currentFunc];
+            const [xMin, xMax] = func.range;
+            
+            // Compute y range
+            const resolution = 200;
+            let yMin = Infinity, yMax = -Infinity;
+            const points = [];
+            
+            for (let i = 0; i <= resolution; i++) {
+                const x = xMin + (xMax - xMin) * i / resolution;
+                const y = func.fn(x);
+                points.push({ x, y });
+                if (isFinite(y)) {
+                    if (y < yMin) yMin = y;
+                    if (y > yMax) yMax = y;
+                }
+            }
+            
+            const yPad = (yMax - yMin) * 0.1;
+            yMin -= yPad;
+            yMax += yPad;
+            const yRange = [yMin, yMax];
+            
+            // Clear
+            ctx.fillStyle = '#0a0a15';
+            ctx.fillRect(0, 0, width, height);
+            
+            // Draw grid
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 1;
+            
+            for (let x = Math.ceil(xMin); x <= Math.floor(xMax); x++) {
+                const sx = toScreen(x, 0, width, height, func.range, yRange).x;
+                ctx.beginPath();
+                ctx.moveTo(sx, 0);
+                ctx.lineTo(sx, height);
+                ctx.stroke();
+            }
+            
+            // Draw axes
+            const origin = toScreen(0, 0, width, height, func.range, yRange);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 1;
+            
+            // X axis
+            if (yMin < 0 && yMax > 0) {
+                ctx.beginPath();
+                ctx.moveTo(0, origin.y);
+                ctx.lineTo(width, origin.y);
+                ctx.stroke();
+            }
+            
+            // Y axis
+            if (xMin < 0 && xMax > 0) {
+                ctx.beginPath();
+                ctx.moveTo(origin.x, 0);
+                ctx.lineTo(origin.x, height);
+                ctx.stroke();
+            }
+            
+            // Fill regions based on convexity (second derivative)
+            for (let i = 0; i < resolution; i++) {
+                const x = xMin + (xMax - xMin) * i / resolution;
+                const d2 = func.d2fn(x);
+                const sx = i / resolution * width;
+                const sw = width / resolution + 1;
+                
+                if (d2 >= 0) {
+                    ctx.fillStyle = 'rgba(0, 206, 201, 0.05)';
+                } else {
+                    ctx.fillStyle = 'rgba(253, 121, 168, 0.08)';
+                }
+                ctx.fillRect(sx, 0, sw, height);
+            }
+            
+            // Draw the function
+            ctx.beginPath();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 3;
+            
+            let started = false;
+            for (const p of points) {
+                if (!isFinite(p.y)) continue;
+                const sp = toScreen(p.x, p.y, width, height, func.range, yRange);
+                if (!started) {
+                    ctx.moveTo(sp.x, sp.y);
+                    started = true;
+                } else {
+                    ctx.lineTo(sp.x, sp.y);
+                }
+            }
+            ctx.stroke();
+            
+            // Draw gradient descent path
+            if (gdPath.length > 0) {
+                ctx.beginPath();
+                ctx.strokeStyle = '#6c5ce7';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 3]);
+                
+                for (let i = 0; i < gdPath.length; i++) {
+                    const p = toScreen(gdPath[i], func.fn(gdPath[i]), width, height, func.range, yRange);
+                    if (i === 0) ctx.moveTo(p.x, p.y);
+                    else ctx.lineTo(p.x, p.y);
+                }
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // Draw current position
+                const curr = gdPath[gdPath.length - 1];
+                const cp = toScreen(curr, func.fn(curr), width, height, func.range, yRange);
+                ctx.beginPath();
+                ctx.arc(cp.x, cp.y, 10, 0, Math.PI * 2);
+                ctx.fillStyle = '#6c5ce7';
+                ctx.shadowColor = '#6c5ce7';
+                ctx.shadowBlur = 15;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+            
+            // Draw mouse position indicator
+            if (mouseX !== null) {
+                const mx = xMin + mouseX / width * (xMax - xMin);
+                const my = func.fn(mx);
+                const d2 = func.d2fn(mx);
+                
+                if (isFinite(my)) {
+                    const mp = toScreen(mx, my, width, height, func.range, yRange);
+                    
+                    // Vertical line
+                    ctx.beginPath();
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([3, 3]);
+                    ctx.moveTo(mp.x, 0);
+                    ctx.lineTo(mp.x, height);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    
+                    // Point on curve
+                    ctx.beginPath();
+                    ctx.arc(mp.x, mp.y, 8, 0, Math.PI * 2);
+                    ctx.fillStyle = d2 >= 0 ? '#00cec9' : '#fd79a8';
+                    ctx.fill();
+                    
+                    // Draw tangent line (based on first derivative)
+                    const df = func.dfn(mx);
+                    const tangentLen = 50;
+                    const dx = tangentLen / Math.sqrt(1 + df*df);
+                    const dy = df * dx;
+                    
+                    ctx.beginPath();
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                    ctx.lineWidth = 2;
+                    ctx.moveTo(mp.x - dx, mp.y + dy * (yRange[1] - yRange[0]) / (xMax - xMin) * height / width);
+                    ctx.lineTo(mp.x + dx, mp.y - dy * (yRange[1] - yRange[0]) / (xMax - xMin) * height / width);
+                    ctx.stroke();
+                    
+                    // Update second derivative display
+                    updateDerivativeDisplay(d2);
+                }
+            }
+            
+            // Labels
+            ctx.fillStyle = '#666';
+            ctx.font = '12px Inter';
+            ctx.fillText(`x: ${xMin}`, 10, height - 10);
+            ctx.fillText(`x: ${xMax}`, width - 40, height - 10);
+            ctx.fillText('f(x)', 10, 20);
+        }
+        
+        function updateDerivativeDisplay(d2) {
+            const maxVal = 50; // For visualization scale
+            const normalized = Math.min(Math.abs(d2), maxVal) / maxVal * 50;
+            
+            const posBar = document.getElementById('posBar');
+            const negBar = document.getElementById('negBar');
+            const derivValue = document.getElementById('derivValue');
+            
+            if (d2 >= 0) {
+                posBar.style.width = normalized + '%';
+                negBar.style.width = '0%';
+            } else {
+                posBar.style.width = '0%';
+                negBar.style.width = normalized + '%';
+            }
+            
+            derivValue.textContent = `f''(x) = ${d2.toFixed(2)}`;
+            derivValue.style.color = d2 >= 0 ? '#00cec9' : '#fd79a8';
+        }
+        
+        function updateUI() {
+            const func = functions[currentFunc];
+            
+            document.getElementById('funcName').textContent = func.name;
+            document.getElementById('funcFormula').textContent = func.formula;
+            document.getElementById('funcExplanation').textContent = func.explanation;
+            
+            const isConvex = document.getElementById('isConvex');
+            isConvex.textContent = func.convex ? 'Yes ✓' : 'No ✗';
+            isConvex.className = 'property-value ' + (func.convex ? 'yes' : 'no');
+            
+            document.getElementById('globalMin').textContent = func.globalMin;
+            document.getElementById('localMinima').textContent = func.localMinima;
+            document.getElementById('saddlePoints').textContent = func.saddles;
+        }
+        
+        function populateFunctionList() {
+            const container = document.getElementById('functionList');
+            container.innerHTML = '';
+            
+            for (const [key, func] of Object.entries(functions)) {
+                const btn = document.createElement('button');
+                btn.className = `function-btn ${func.convex ? 'convex' : 'non-convex'} ${key === currentFunc ? 'active' : ''}`;
+                btn.innerHTML = `${func.name}<span class="function-tag ${func.convex ? 'convex' : 'non-convex'}">${func.convex ? 'Convex' : 'Non-Convex'}</span>`;
+                btn.onclick = () => {
+                    currentFunc = key;
+                    gdPath = [];
+                    gdRunning = false;
+                    document.querySelectorAll('.function-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    updateUI();
+                    render();
+                };
+                container.appendChild(btn);
+            }
+        }
+        
+        // Gradient descent
+        function runGradientDescent(startX) {
+            const func = functions[currentFunc];
+            gdPhi = startX;
+            gdPath = [gdPhi];
+            gdRunning = true;
+            
+            function step() {
+                if (!gdRunning || gdPath.length > 200) {
+                    gdRunning = false;
+                    return;
+                }
+                
+                const lr = 0.05;
+                const grad = func.dfn(gdPhi);
+                gdPhi = gdPhi - lr * grad;
+                
+                // Clamp
+                const [xMin, xMax] = func.range;
+                gdPhi = Math.max(xMin * 0.95, Math.min(xMax * 0.95, gdPhi));
+                
+                gdPath.push(gdPhi);
+                render();
+                
+                // Check convergence
+                if (Math.abs(grad) < 0.01) {
+                    gdRunning = false;
+                    return;
+                }
+                
+                setTimeout(step, 50);
+            }
+            
+            step();
+        }
+        
+        // Event listeners
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            render();
+        });
+        
+        canvas.addEventListener('mouseleave', () => {
+            mouseX = null;
+            render();
+        });
+        
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const func = functions[currentFunc];
+            const [xMin, xMax] = func.range;
+            const clickX = xMin + x / rect.width * (xMax - xMin);
+            
+            gdRunning = false;
+            setTimeout(() => runGradientDescent(clickX), 100);
+        });
+        
+        window.addEventListener('resize', () => {
+            setupCanvas();
+            render();
+        });
+        
+        // Initialize
+        setupCanvas();
+        populateFunctionList();
+        updateUI();
+        render();
+    </script>
+</body>
+</html>

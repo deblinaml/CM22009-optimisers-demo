@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGD vs Gradient Descent - Interactive Comparison</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@400;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #0a0a0f;
+            min-height: 100vh;
+            color: #e8e8e8;
+        }
+        
+        .container {
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #ff6b6b, #feca57, #48dbfb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+        
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .panel {
+            background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 24px;
+            overflow: hidden;
+        }
+        
+        .panel-header {
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        
+        .panel-title.gd {
+            color: #48dbfb;
+        }
+        
+        .panel-title.sgd {
+            color: #ff6b6b;
+        }
+        
+        .badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .badge.gd {
+            background: rgba(72, 219, 251, 0.15);
+            color: #48dbfb;
+        }
+        
+        .badge.sgd {
+            background: rgba(255, 107, 107, 0.15);
+            color: #ff6b6b;
+        }
+        
+        .panel-content {
+            padding: 1rem;
+        }
+        
+        canvas {
+            width: 100%;
+            height: 350px;
+            border-radius: 12px;
+            background: #050508;
+        }
+        
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .stat {
+            background: rgba(255,255,255,0.03);
+            padding: 0.75rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+        
+        .stat-value.gd {
+            color: #48dbfb;
+        }
+        
+        .stat-value.sgd {
+            color: #ff6b6b;
+        }
+        
+        .stat-label {
+            font-size: 0.7rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0.25rem;
+        }
+        
+        .controls-panel {
+            background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 24px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .control-group label {
+            font-size: 0.85rem;
+            color: #888;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .control-group label span {
+            font-family: 'JetBrains Mono', monospace;
+            color: #feca57;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.1);
+            -webkit-appearance: none;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #feca57, #ff6b6b);
+            cursor: pointer;
+        }
+        
+        .button-row {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-start {
+            background: linear-gradient(135deg, #48dbfb, #0abde3);
+            color: #000;
+        }
+        
+        .btn-start:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(72, 219, 251, 0.3);
+        }
+        
+        .btn-step {
+            background: rgba(254, 202, 87, 0.2);
+            color: #feca57;
+            border: 1px solid rgba(254, 202, 87, 0.3);
+        }
+        
+        .btn-reset {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+            border: 1px solid rgba(255, 107, 107, 0.3);
+        }
+        
+        .info-panel {
+            background: linear-gradient(135deg, rgba(254, 202, 87, 0.1), rgba(255, 107, 107, 0.1));
+            border: 1px solid rgba(254, 202, 87, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+        
+        .info-panel h3 {
+            color: #feca57;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        
+        .info-card {
+            background: rgba(0,0,0,0.3);
+            padding: 1rem;
+            border-radius: 12px;
+        }
+        
+        .info-card h4 {
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .info-card h4.gd {
+            color: #48dbfb;
+        }
+        
+        .info-card h4.sgd {
+            color: #ff6b6b;
+        }
+        
+        .info-card p {
+            font-size: 0.85rem;
+            color: #999;
+            line-height: 1.5;
+        }
+        
+        .info-card code {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(255,255,255,0.1);
+            padding: 0.1rem 0.3rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        
+        .data-points {
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .data-points-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .data-points h4 {
+            color: #feca57;
+            font-size: 0.9rem;
+        }
+        
+        .mini-batch-indicator {
+            display: flex;
+            gap: 0.25rem;
+            flex-wrap: wrap;
+        }
+        
+        .data-point {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.15);
+            transition: all 0.2s;
+        }
+        
+        .data-point.active {
+            background: #ff6b6b;
+            box-shadow: 0 0 8px rgba(255, 107, 107, 0.5);
+        }
+        
+        .data-point.used {
+            background: rgba(255, 107, 107, 0.3);
+        }
+        
+        @media (max-width: 900px) {
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SGD vs Full-Batch Gradient Descent</h1>
+        <p class="subtitle">See how mini-batches add beneficial noise to escape local minima</p>
+        
+        <div class="controls-panel">
+            <div class="controls-grid">
+                <div class="control-group">
+                    <label>Learning Rate (α) <span id="lrDisplay">0.05</span></label>
+                    <input type="range" id="learningRate" min="0.001" max="0.2" step="0.001" value="0.05">
+                </div>
+                <div class="control-group">
+                    <label>Mini-Batch Size <span id="batchDisplay">4</span></label>
+                    <input type="range" id="batchSize" min="1" max="20" step="1" value="4">
+                </div>
+                <div class="control-group">
+                    <label>Total Data Points <span id="dataDisplay">20</span></label>
+                    <input type="range" id="dataPoints" min="10" max="50" step="5" value="20">
+                </div>
+                <div class="control-group">
+                    <label>Animation Speed <span id="speedDisplay">100ms</span></label>
+                    <input type="range" id="speed" min="20" max="500" step="10" value="100">
+                </div>
+            </div>
+            
+            <div class="data-points">
+                <div class="data-points-header">
+                    <h4>📊 Training Data (Mini-Batch Sampling)</h4>
+                    <span style="color: #666; font-size: 0.8rem;">Epoch: <span id="epochCount">0</span></span>
+                </div>
+                <div class="mini-batch-indicator" id="dataIndicator"></div>
+            </div>
+            
+            <div class="button-row">
+                <button class="btn-start" onclick="startBoth()">▶ Run Both</button>
+                <button class="btn-step" onclick="stepBoth()">Step Once</button>
+                <button class="btn-reset" onclick="resetAll()">↺ Reset</button>
+            </div>
+        </div>
+        
+        <div class="comparison-grid">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title gd">Full-Batch Gradient Descent</div>
+                    <div class="badge gd">Uses All Data</div>
+                </div>
+                <div class="panel-content">
+                    <canvas id="gdCanvas"></canvas>
+                    <div class="stats-row">
+                        <div class="stat">
+                            <div class="stat-value gd" id="gdIter">0</div>
+                            <div class="stat-label">Iteration</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value gd" id="gdLoss">—</div>
+                            <div class="stat-label">Loss</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value gd" id="gdPos">—</div>
+                            <div class="stat-label">Position (φ)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title sgd">Stochastic Gradient Descent</div>
+                    <div class="badge sgd">Mini-Batches</div>
+                </div>
+                <div class="panel-content">
+                    <canvas id="sgdCanvas"></canvas>
+                    <div class="stats-row">
+                        <div class="stat">
+                            <div class="stat-value sgd" id="sgdIter">0</div>
+                            <div class="stat-label">Iteration</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value sgd" id="sgdLoss">—</div>
+                            <div class="stat-label">Loss</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value sgd" id="sgdPos">—</div>
+                            <div class="stat-label">Position (φ)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="info-panel">
+            <h3>📚 Key Differences</h3>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4 class="gd">Full-Batch Gradient Descent</h4>
+                    <p>
+                        Uses <strong>all</strong> training data to compute the gradient at each step.
+                        <br><br>
+                        <code>φ ← φ - α·Σᵢ ∂ℓᵢ/∂φ</code>
+                        <br><br>
+                        ✓ Smooth, deterministic path<br>
+                        ✗ Can get stuck in local minima<br>
+                        ✗ Expensive for large datasets
+                    </p>
+                </div>
+                <div class="info-card">
+                    <h4 class="sgd">Stochastic Gradient Descent</h4>
+                    <p>
+                        Uses a <strong>random mini-batch</strong> of data at each step.
+                        <br><br>
+                        <code>φ ← φ - α·Σᵢ∈Bₜ ∂ℓᵢ/∂φ</code>
+                        <br><br>
+                        ✓ Noise helps escape local minima<br>
+                        ✓ Computationally efficient<br>
+                        ✓ Often finds better solutions
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Canvas setup
+        const gdCanvas = document.getElementById('gdCanvas');
+        const sgdCanvas = document.getElementById('sgdCanvas');
+        const gdCtx = gdCanvas.getContext('2d');
+        const sgdCtx = sgdCanvas.getContext('2d');
+        
+        function setupCanvas(canvas, ctx) {
+            const rect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+        }
+        
+        // State
+        let gdPhi = -3;
+        let sgdPhi = -3;
+        let gdPath = [];
+        let sgdPath = [];
+        let isRunning = false;
+        let animationId = null;
+        let dataPointsUsed = new Set();
+        let currentBatch = [];
+        let epoch = 0;
+        let batchIndex = 0;
+        
+        // Generate synthetic data with noise
+        let numDataPoints = 20;
+        let dataPoints = [];
+        
+        function generateData() {
+            numDataPoints = parseInt(document.getElementById('dataPoints').value);
+            dataPoints = [];
+            for (let i = 0; i < numDataPoints; i++) {
+                const x = -4 + 8 * i / (numDataPoints - 1);
+                // Base function + noise
+                const noise = (Math.random() - 0.5) * 2;
+                dataPoints.push({ x, noise });
+            }
+            updateDataIndicator();
+        }
+        
+        // Loss function with local minima (sum over data)
+        function baseLoss(phi) {
+            // A function with multiple local minima
+            return 0.5 * phi * phi + 3 * Math.sin(phi * 1.5) + 0.3 * Math.sin(phi * 4);
+        }
+        
+        function baseGradient(phi) {
+            return phi + 4.5 * Math.cos(phi * 1.5) + 1.2 * Math.cos(phi * 4);
+        }
+        
+        // Full batch loss (average over all data)
+        function fullBatchLoss(phi) {
+            let total = 0;
+            for (const dp of dataPoints) {
+                total += baseLoss(phi + dp.noise * 0.3);
+            }
+            return total / dataPoints.length;
+        }
+        
+        function fullBatchGradient(phi) {
+            let total = 0;
+            for (const dp of dataPoints) {
+                total += baseGradient(phi + dp.noise * 0.3);
+            }
+            return total / dataPoints.length;
+        }
+        
+        // Mini-batch loss
+        function miniBatchGradient(phi, batchIndices) {
+            let total = 0;
+            for (const idx of batchIndices) {
+                total += baseGradient(phi + dataPoints[idx].noise * 0.3);
+            }
+            return total / batchIndices.length;
+        }
+        
+        // Get next mini-batch (without replacement within epoch)
+        function getNextMiniBatch() {
+            const batchSize = parseInt(document.getElementById('batchSize').value);
+            const remaining = [];
+            
+            for (let i = 0; i < numDataPoints; i++) {
+                if (!dataPointsUsed.has(i)) {
+                    remaining.push(i);
+                }
+            }
+            
+            if (remaining.length < batchSize) {
+                // New epoch
+                dataPointsUsed.clear();
+                epoch++;
+                for (let i = 0; i < numDataPoints; i++) {
+                    remaining.push(i);
+                }
+            }
+            
+            // Shuffle and take batch
+            for (let i = remaining.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [remaining[i], remaining[j]] = [remaining[j], remaining[i]];
+            }
+            
+            const batch = remaining.slice(0, batchSize);
+            batch.forEach(i => dataPointsUsed.add(i));
+            currentBatch = batch;
+            
+            return batch;
+        }
+        
+        // Update data indicator
+        function updateDataIndicator() {
+            const container = document.getElementById('dataIndicator');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < numDataPoints; i++) {
+                const div = document.createElement('div');
+                div.className = 'data-point';
+                if (currentBatch.includes(i)) {
+                    div.classList.add('active');
+                } else if (dataPointsUsed.has(i)) {
+                    div.classList.add('used');
+                }
+                container.appendChild(div);
+            }
+            
+            document.getElementById('epochCount').textContent = epoch;
+        }
+        
+        // Color mapping
+        function getColor(value, min, max) {
+            const t = Math.max(0, Math.min(1, (value - min) / (max - min)));
+            // Dark blue to yellow gradient
+            const r = Math.round(15 + t * 240);
+            const g = Math.round(15 + t * 200);
+            const b = Math.round(80 - t * 60);
+            return `rgb(${r},${g},${b})`;
+        }
+        
+        // Draw 1D loss function
+        function drawLossFunction(ctx, width, height, phi, path, color, isGD) {
+            const range = [-4, 4];
+            const [rMin, rMax] = range;
+            
+            // Compute loss values
+            const resolution = 200;
+            let minLoss = Infinity, maxLoss = -Infinity;
+            const losses = [];
+            
+            for (let i = 0; i < resolution; i++) {
+                const x = rMin + (rMax - rMin) * i / resolution;
+                const loss = fullBatchLoss(x);
+                losses.push({ x, loss });
+                if (loss < minLoss) minLoss = loss;
+                if (loss > maxLoss) maxLoss = loss;
+            }
+            
+            // Add padding to loss range
+            const lossPadding = (maxLoss - minLoss) * 0.1;
+            minLoss -= lossPadding;
+            maxLoss += lossPadding;
+            
+            // Clear
+            ctx.fillStyle = '#050508';
+            ctx.fillRect(0, 0, width, height);
+            
+            // Draw gradient background for loss
+            const imgData = ctx.createImageData(width, 1);
+            for (let i = 0; i < width; i++) {
+                const x = rMin + (rMax - rMin) * i / width;
+                const loss = fullBatchLoss(x);
+                const t = (loss - minLoss) / (maxLoss - minLoss);
+                const r = Math.round(10 + t * 40);
+                const g = Math.round(10 + t * 20);
+                const b = Math.round(30 + t * 10);
+                imgData.data[i * 4] = r;
+                imgData.data[i * 4 + 1] = g;
+                imgData.data[i * 4 + 2] = b;
+                imgData.data[i * 4 + 3] = 255;
+            }
+            
+            // Repeat vertically
+            for (let y = 0; y < height; y++) {
+                ctx.putImageData(imgData, 0, y);
+            }
+            
+            // Draw loss curve
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.lineWidth = 2;
+            
+            for (let i = 0; i < losses.length; i++) {
+                const screenX = (losses[i].x - rMin) / (rMax - rMin) * width;
+                const screenY = height - (losses[i].loss - minLoss) / (maxLoss - minLoss) * height * 0.8 - height * 0.1;
+                
+                if (i === 0) {
+                    ctx.moveTo(screenX, screenY);
+                } else {
+                    ctx.lineTo(screenX, screenY);
+                }
+            }
+            ctx.stroke();
+            
+            // Draw path
+            if (path.length > 1) {
+                ctx.beginPath();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 3]);
+                
+                for (let i = 0; i < path.length; i++) {
+                    const screenX = (path[i] - rMin) / (rMax - rMin) * width;
+                    const loss = fullBatchLoss(path[i]);
+                    const screenY = height - (loss - minLoss) / (maxLoss - minLoss) * height * 0.8 - height * 0.1;
+                    
+                    if (i === 0) {
+                        ctx.moveTo(screenX, screenY);
+                    } else {
+                        ctx.lineTo(screenX, screenY);
+                    }
+                }
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+            
+            // Draw current position
+            const currX = (phi - rMin) / (rMax - rMin) * width;
+            const currLoss = fullBatchLoss(phi);
+            const currY = height - (currLoss - minLoss) / (maxLoss - minLoss) * height * 0.8 - height * 0.1;
+            
+            // Vertical line to curve
+            ctx.beginPath();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1;
+            ctx.setLineDash([3, 3]);
+            ctx.moveTo(currX, height);
+            ctx.lineTo(currX, currY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Ball on curve
+            ctx.beginPath();
+            ctx.arc(currX, currY, 12, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 20;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            // Draw gradient arrow
+            const grad = isGD ? fullBatchGradient(phi) : miniBatchGradient(phi, currentBatch.length > 0 ? currentBatch : [0]);
+            const arrowLen = Math.min(50, Math.abs(grad) * 20);
+            const direction = grad > 0 ? -1 : 1; // Move opposite to gradient
+            
+            ctx.beginPath();
+            ctx.moveTo(currX, currY);
+            ctx.lineTo(currX + direction * arrowLen, currY);
+            ctx.strokeStyle = isGD ? '#48dbfb' : '#ff6b6b';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // Arrow head
+            ctx.beginPath();
+            ctx.moveTo(currX + direction * arrowLen, currY);
+            ctx.lineTo(currX + direction * arrowLen - direction * 8, currY - 5);
+            ctx.lineTo(currX + direction * arrowLen - direction * 8, currY + 5);
+            ctx.closePath();
+            ctx.fillStyle = isGD ? '#48dbfb' : '#ff6b6b';
+            ctx.fill();
+            
+            // Labels
+            ctx.fillStyle = '#666';
+            ctx.font = '12px Outfit';
+            ctx.fillText('φ = ' + rMin, 10, height - 10);
+            ctx.fillText('φ = ' + rMax, width - 50, height - 10);
+            ctx.fillText('L(φ)', 10, 20);
+            
+            // Mark local minima
+            ctx.fillStyle = 'rgba(254, 202, 87, 0.5)';
+            ctx.font = '10px JetBrains Mono';
+            const localMinima = findLocalMinima(losses);
+            localMinima.forEach((m, i) => {
+                const mx = (m.x - rMin) / (rMax - rMin) * width;
+                const my = height - (m.loss - minLoss) / (maxLoss - minLoss) * height * 0.8 - height * 0.1;
+                ctx.beginPath();
+                ctx.arc(mx, my, 5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+        
+        function findLocalMinima(losses) {
+            const minima = [];
+            for (let i = 1; i < losses.length - 1; i++) {
+                if (losses[i].loss < losses[i-1].loss && losses[i].loss < losses[i+1].loss) {
+                    minima.push(losses[i]);
+                }
+            }
+            return minima;
+        }
+        
+        // Render both canvases
+        function render() {
+            const gdRect = gdCanvas.getBoundingClientRect();
+            const sgdRect = sgdCanvas.getBoundingClientRect();
+            
+            setupCanvas(gdCanvas, gdCtx);
+            setupCanvas(sgdCanvas, sgdCtx);
+            
+            drawLossFunction(gdCtx, gdRect.width, gdRect.height, gdPhi, gdPath, '#48dbfb', true);
+            drawLossFunction(sgdCtx, sgdRect.width, sgdRect.height, sgdPhi, sgdPath, '#ff6b6b', false);
+            
+            updateStats();
+            updateDataIndicator();
+        }
+        
+        // Update stats
+        function updateStats() {
+            document.getElementById('gdIter').textContent = gdPath.length;
+            document.getElementById('gdLoss').textContent = fullBatchLoss(gdPhi).toFixed(3);
+            document.getElementById('gdPos').textContent = gdPhi.toFixed(3);
+            
+            document.getElementById('sgdIter').textContent = sgdPath.length;
+            document.getElementById('sgdLoss').textContent = fullBatchLoss(sgdPhi).toFixed(3);
+            document.getElementById('sgdPos').textContent = sgdPhi.toFixed(3);
+        }
+        
+        // Step functions
+        function stepGD() {
+            const lr = parseFloat(document.getElementById('learningRate').value);
+            const grad = fullBatchGradient(gdPhi);
+            gdPhi = gdPhi - lr * grad;
+            gdPhi = Math.max(-4, Math.min(4, gdPhi));
+            gdPath.push(gdPhi);
+        }
+        
+        function stepSGD() {
+            const lr = parseFloat(document.getElementById('learningRate').value);
+            const batch = getNextMiniBatch();
+            const grad = miniBatchGradient(sgdPhi, batch);
+            sgdPhi = sgdPhi - lr * grad;
+            sgdPhi = Math.max(-4, Math.min(4, sgdPhi));
+            sgdPath.push(sgdPhi);
+        }
+        
+        // Controls
+        function startBoth() {
+            if (isRunning) {
+                isRunning = false;
+                return;
+            }
+            isRunning = true;
+            animate();
+        }
+        
+        function animate() {
+            if (!isRunning) return;
+            
+            stepGD();
+            stepSGD();
+            render();
+            
+            const speed = parseInt(document.getElementById('speed').value);
+            animationId = setTimeout(animate, speed);
+        }
+        
+        function stepBoth() {
+            if (isRunning) return;
+            stepGD();
+            stepSGD();
+            render();
+        }
+        
+        function resetAll() {
+            isRunning = false;
+            clearTimeout(animationId);
+            gdPhi = -3;
+            sgdPhi = -3;
+            gdPath = [gdPhi];
+            sgdPath = [sgdPhi];
+            dataPointsUsed.clear();
+            currentBatch = [];
+            epoch = 0;
+            generateData();
+            render();
+        }
+        
+        // Event listeners
+        document.getElementById('learningRate').addEventListener('input', (e) => {
+            document.getElementById('lrDisplay').textContent = e.target.value;
+        });
+        
+        document.getElementById('batchSize').addEventListener('input', (e) => {
+            document.getElementById('batchDisplay').textContent = e.target.value;
+        });
+        
+        document.getElementById('dataPoints').addEventListener('input', (e) => {
+            document.getElementById('dataDisplay').textContent = e.target.value;
+            generateData();
+            render();
+        });
+        
+        document.getElementById('speed').addEventListener('input', (e) => {
+            document.getElementById('speedDisplay').textContent = e.target.value + 'ms';
+        });
+        
+        // Initialize
+        window.addEventListener('resize', render);
+        generateData();
+        gdPath = [gdPhi];
+        sgdPath = [sgdPhi];
+        render();
+    </script>
+</body>
+</html>

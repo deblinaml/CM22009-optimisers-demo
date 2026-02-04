@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Gradient Descent Visualization</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@400;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #0d0d1a 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #00d4ff, #7c3aed, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .visualization-panel {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .panel-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #00d4ff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .panel-title::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(180deg, #00d4ff, #7c3aed);
+            border-radius: 2px;
+        }
+        
+        canvas {
+            width: 100%;
+            height: 400px;
+            border-radius: 12px;
+            background: #0a0a1a;
+        }
+        
+        .controls {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .control-group label {
+            font-size: 0.9rem;
+            color: #aaa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .control-group label span {
+            font-family: 'JetBrains Mono', monospace;
+            color: #00d4ff;
+            font-weight: 600;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00d4ff, #7c3aed);
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+        }
+        
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+            font-family: inherit;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+        
+        select:focus {
+            outline: none;
+            border-color: #00d4ff;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #00d4ff, #7c3aed);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #f472b6, #ef4444);
+            color: white;
+        }
+        
+        .stats-panel {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 1.5rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #00d4ff;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 0.25rem;
+        }
+        
+        .math-display {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(0, 212, 255, 0.1);
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+            border-left: 3px solid #00d4ff;
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+        
+        .gradient-arrow {
+            color: #f472b6;
+        }
+        
+        .explanation {
+            background: rgba(124, 58, 237, 0.1);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        .explanation strong {
+            color: #a78bfa;
+        }
+        
+        @media (max-width: 900px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Interactive Gradient Descent</h1>
+        <p class="subtitle">Visualize how gradient descent finds the minimum of a loss function</p>
+        
+        <div class="controls">
+            <div class="control-grid">
+                <div class="control-group">
+                    <label>Loss Function <span id="funcDisplay">Quadratic Bowl</span></label>
+                    <select id="functionSelect">
+                        <option value="quadratic">Quadratic Bowl (Convex)</option>
+                        <option value="rosenbrock">Rosenbrock (Non-Convex Valley)</option>
+                        <option value="rastrigin">Rastrigin (Many Local Minima)</option>
+                        <option value="beale">Beale Function (Flat Regions)</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Learning Rate (α) <span id="lrDisplay">0.1</span></label>
+                    <input type="range" id="learningRate" min="0.001" max="0.5" step="0.001" value="0.1">
+                </div>
+                <div class="control-group">
+                    <label>Animation Speed <span id="speedDisplay">50ms</span></label>
+                    <input type="range" id="speed" min="10" max="500" step="10" value="50">
+                </div>
+                <div class="control-group">
+                    <label>Max Iterations <span id="iterDisplay">100</span></label>
+                    <input type="range" id="maxIter" min="10" max="500" step="10" value="100">
+                </div>
+            </div>
+            <div class="button-group">
+                <button class="btn-primary" onclick="startGradientDescent()">▶ Start Descent</button>
+                <button class="btn-secondary" onclick="stepOnce()">Step Once</button>
+                <button class="btn-secondary" onclick="pauseResume()">⏸ Pause/Resume</button>
+                <button class="btn-danger" onclick="reset()">↺ Reset</button>
+            </div>
+        </div>
+        
+        <div class="main-grid">
+            <div class="visualization-panel">
+                <div class="panel-title">Loss Surface (Top View)</div>
+                <canvas id="contourCanvas"></canvas>
+                <p style="font-size: 0.85rem; color: #666; margin-top: 0.5rem;">
+                    Click anywhere on the surface to set the starting point
+                </p>
+            </div>
+            <div class="visualization-panel">
+                <div class="panel-title">3D Loss Surface</div>
+                <canvas id="surface3D"></canvas>
+            </div>
+        </div>
+        
+        <div class="stats-panel">
+            <div class="panel-title">Optimization Progress</div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="iterCount">0</div>
+                    <div class="stat-label">Iteration</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="lossValue">—</div>
+                    <div class="stat-label">Loss L(φ)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="gradMag">—</div>
+                    <div class="stat-label">|∇L|</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="phi0">—</div>
+                    <div class="stat-label">φ₀</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="phi1">—</div>
+                    <div class="stat-label">φ₁</div>
+                </div>
+            </div>
+            
+            <div class="math-display">
+                <strong>Update Rule:</strong> φₜ₊₁ ← φₜ - α · ∇L(φₜ)<br>
+                <span class="gradient-arrow">Current Gradient:</span> ∇L = [<span id="grad0">—</span>, <span id="grad1">—</span>]
+            </div>
+            
+            <div class="explanation" id="explanation">
+                <strong>How it works:</strong> Gradient descent iteratively moves in the direction opposite to the gradient 
+                (steepest ascent becomes steepest descent). The learning rate α controls step size. 
+                Try different functions to see how convexity affects convergence!
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Canvas setup
+        const contourCanvas = document.getElementById('contourCanvas');
+        const ctx = contourCanvas.getContext('2d');
+        const surface3D = document.getElementById('surface3D');
+        const ctx3D = surface3D.getContext('2d');
+        
+        // High DPI support
+        function setupCanvas(canvas, context) {
+            const rect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            context.scale(dpr, dpr);
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+        }
+        
+        // State
+        let phi = [2.5, 2.5];
+        let path = [];
+        let isRunning = false;
+        let animationId = null;
+        let currentFunction = 'quadratic';
+        
+        // Loss functions
+        const functions = {
+            quadratic: {
+                loss: (x, y) => x*x + y*y,
+                gradient: (x, y) => [2*x, 2*y],
+                range: [-4, 4],
+                optimal: [0, 0]
+            },
+            rosenbrock: {
+                loss: (x, y) => Math.pow(1 - x, 2) + 100 * Math.pow(y - x*x, 2),
+                gradient: (x, y) => [
+                    -2*(1 - x) - 400*x*(y - x*x),
+                    200*(y - x*x)
+                ],
+                range: [-2, 2],
+                optimal: [1, 1]
+            },
+            rastrigin: {
+                loss: (x, y) => 20 + x*x + y*y - 10*(Math.cos(2*Math.PI*x) + Math.cos(2*Math.PI*y)),
+                gradient: (x, y) => [
+                    2*x + 20*Math.PI*Math.sin(2*Math.PI*x),
+                    2*y + 20*Math.PI*Math.sin(2*Math.PI*y)
+                ],
+                range: [-5.12, 5.12],
+                optimal: [0, 0]
+            },
+            beale: {
+                loss: (x, y) => Math.pow(1.5 - x + x*y, 2) + Math.pow(2.25 - x + x*y*y, 2) + Math.pow(2.625 - x + x*y*y*y, 2),
+                gradient: (x, y) => {
+                    const t1 = 1.5 - x + x*y;
+                    const t2 = 2.25 - x + x*y*y;
+                    const t3 = 2.625 - x + x*y*y*y;
+                    return [
+                        2*t1*(-1 + y) + 2*t2*(-1 + y*y) + 2*t3*(-1 + y*y*y),
+                        2*t1*x + 2*t2*2*x*y + 2*t3*3*x*y*y
+                    ];
+                },
+                range: [-4.5, 4.5],
+                optimal: [3, 0.5]
+            }
+        };
+        
+        // Color map (viridis-like)
+        function getColor(value, min, max) {
+            const t = Math.max(0, Math.min(1, (value - min) / (max - min)));
+            const colors = [
+                [68, 1, 84],
+                [72, 40, 120],
+                [62, 74, 137],
+                [49, 104, 142],
+                [38, 130, 142],
+                [31, 158, 137],
+                [53, 183, 121],
+                [109, 205, 89],
+                [180, 222, 44],
+                [253, 231, 37]
+            ];
+            const idx = t * (colors.length - 1);
+            const i = Math.floor(idx);
+            const f = idx - i;
+            if (i >= colors.length - 1) return `rgb(${colors[colors.length-1].join(',')})`;
+            const c1 = colors[i];
+            const c2 = colors[i + 1];
+            const r = Math.round(c1[0] + f * (c2[0] - c1[0]));
+            const g = Math.round(c1[1] + f * (c2[1] - c1[1]));
+            const b = Math.round(c1[2] + f * (c2[2] - c1[2]));
+            return `rgb(${r},${g},${b})`;
+        }
+        
+        // Draw contour plot
+        function drawContour() {
+            const rect = contourCanvas.getBoundingClientRect();
+            const width = rect.width;
+            const height = rect.height;
+            const func = functions[currentFunction];
+            const [rMin, rMax] = func.range;
+            
+            // Compute loss values for color scaling
+            let minLoss = Infinity, maxLoss = -Infinity;
+            const resolution = 100;
+            const losses = [];
+            
+            for (let i = 0; i < resolution; i++) {
+                losses[i] = [];
+                for (let j = 0; j < resolution; j++) {
+                    const x = rMin + (rMax - rMin) * i / resolution;
+                    const y = rMin + (rMax - rMin) * j / resolution;
+                    const loss = func.loss(x, y);
+                    losses[i][j] = loss;
+                    if (loss < minLoss) minLoss = loss;
+                    if (loss > maxLoss) maxLoss = loss;
+                }
+            }
+            
+            // Use log scale for better visualization
+            const logMin = Math.log(minLoss + 1);
+            const logMax = Math.log(maxLoss + 1);
+            
+            // Draw surface
+            const cellW = width / resolution;
+            const cellH = height / resolution;
+            
+            for (let i = 0; i < resolution; i++) {
+                for (let j = 0; j < resolution; j++) {
+                    const logLoss = Math.log(losses[i][j] + 1);
+                    ctx.fillStyle = getColor(logLoss, logMin, logMax);
+                    ctx.fillRect(i * cellW, (resolution - 1 - j) * cellH, cellW + 1, cellH + 1);
+                }
+            }
+            
+            // Draw contour lines
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+            ctx.lineWidth = 0.5;
+            const numContours = 15;
+            for (let c = 0; c < numContours; c++) {
+                const level = Math.exp(logMin + (logMax - logMin) * c / numContours) - 1;
+                drawContourLine(losses, level, resolution, width, height, rMin, rMax);
+            }
+            
+            // Draw path
+            if (path.length > 1) {
+                ctx.beginPath();
+                ctx.strokeStyle = '#00d4ff';
+                ctx.lineWidth = 2;
+                ctx.shadowColor = '#00d4ff';
+                ctx.shadowBlur = 10;
+                
+                const p0 = toScreen(path[0][0], path[0][1], width, height, rMin, rMax);
+                ctx.moveTo(p0.x, p0.y);
+                
+                for (let i = 1; i < path.length; i++) {
+                    const p = toScreen(path[i][0], path[i][1], width, height, rMin, rMax);
+                    ctx.lineTo(p.x, p.y);
+                }
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+                
+                // Draw points
+                path.forEach((point, i) => {
+                    const p = toScreen(point[0], point[1], width, height, rMin, rMax);
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, i === path.length - 1 ? 8 : 3, 0, Math.PI * 2);
+                    ctx.fillStyle = i === 0 ? '#f472b6' : (i === path.length - 1 ? '#00ff88' : 'rgba(255,255,255,0.5)');
+                    ctx.fill();
+                });
+            }
+            
+            // Draw current position
+            const pos = toScreen(phi[0], phi[1], width, height, rMin, rMax);
+            ctx.beginPath();
+            ctx.arc(pos.x, pos.y, 10, 0, Math.PI * 2);
+            ctx.fillStyle = '#00ff88';
+            ctx.shadowColor = '#00ff88';
+            ctx.shadowBlur = 20;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            // Draw gradient arrow
+            const grad = func.gradient(phi[0], phi[1]);
+            const gradMag = Math.sqrt(grad[0]*grad[0] + grad[1]*grad[1]);
+            if (gradMag > 0.01) {
+                const arrowLen = 30;
+                const dx = -grad[0] / gradMag * arrowLen;
+                const dy = grad[1] / gradMag * arrowLen; // Flip y for screen coords
+                
+                ctx.beginPath();
+                ctx.moveTo(pos.x, pos.y);
+                ctx.lineTo(pos.x + dx, pos.y + dy);
+                ctx.strokeStyle = '#f472b6';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                
+                // Arrow head
+                const angle = Math.atan2(dy, dx);
+                ctx.beginPath();
+                ctx.moveTo(pos.x + dx, pos.y + dy);
+                ctx.lineTo(pos.x + dx - 10*Math.cos(angle - 0.5), pos.y + dy - 10*Math.sin(angle - 0.5));
+                ctx.moveTo(pos.x + dx, pos.y + dy);
+                ctx.lineTo(pos.x + dx - 10*Math.cos(angle + 0.5), pos.y + dy - 10*Math.sin(angle + 0.5));
+                ctx.stroke();
+            }
+            
+            // Draw optimal point
+            const opt = toScreen(func.optimal[0], func.optimal[1], width, height, rMin, rMax);
+            ctx.beginPath();
+            ctx.arc(opt.x, opt.y, 6, 0, Math.PI * 2);
+            ctx.strokeStyle = '#ffd700';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+        
+        function drawContourLine(losses, level, resolution, width, height, rMin, rMax) {
+            // Marching squares simplified
+            const cellW = width / resolution;
+            const cellH = height / resolution;
+            
+            for (let i = 0; i < resolution - 1; i++) {
+                for (let j = 0; j < resolution - 1; j++) {
+                    const v00 = losses[i][j];
+                    const v10 = losses[i+1][j];
+                    const v01 = losses[i][j+1];
+                    const v11 = losses[i+1][j+1];
+                    
+                    const crossings = [];
+                    if ((v00 < level) !== (v10 < level)) {
+                        const t = (level - v00) / (v10 - v00);
+                        crossings.push([(i + t) * cellW, (resolution - 1 - j) * cellH]);
+                    }
+                    if ((v10 < level) !== (v11 < level)) {
+                        const t = (level - v10) / (v11 - v10);
+                        crossings.push([(i + 1) * cellW, (resolution - 1 - j - t) * cellH]);
+                    }
+                    if ((v01 < level) !== (v11 < level)) {
+                        const t = (level - v01) / (v11 - v01);
+                        crossings.push([(i + t) * cellW, (resolution - 1 - j - 1) * cellH]);
+                    }
+                    if ((v00 < level) !== (v01 < level)) {
+                        const t = (level - v00) / (v01 - v00);
+                        crossings.push([i * cellW, (resolution - 1 - j - t) * cellH]);
+                    }
+                    
+                    if (crossings.length >= 2) {
+                        ctx.beginPath();
+                        ctx.moveTo(crossings[0][0], crossings[0][1]);
+                        ctx.lineTo(crossings[1][0], crossings[1][1]);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+        
+        function toScreen(x, y, width, height, rMin, rMax) {
+            return {
+                x: (x - rMin) / (rMax - rMin) * width,
+                y: height - (y - rMin) / (rMax - rMin) * height
+            };
+        }
+        
+        function fromScreen(sx, sy, width, height, rMin, rMax) {
+            return [
+                rMin + sx / width * (rMax - rMin),
+                rMin + (height - sy) / height * (rMax - rMin)
+            ];
+        }
+        
+        // Draw 3D surface
+        function draw3D() {
+            const rect = surface3D.getBoundingClientRect();
+            const width = rect.width;
+            const height = rect.height;
+            const func = functions[currentFunction];
+            const [rMin, rMax] = func.range;
+            
+            ctx3D.fillStyle = '#0a0a1a';
+            ctx3D.fillRect(0, 0, width, height);
+            
+            const resolution = 40;
+            const scale = 120;
+            const rotX = 0.8;
+            const rotZ = 0.5;
+            
+            // Compute losses
+            let minLoss = Infinity, maxLoss = -Infinity;
+            const points = [];
+            
+            for (let i = 0; i <= resolution; i++) {
+                points[i] = [];
+                for (let j = 0; j <= resolution; j++) {
+                    const x = rMin + (rMax - rMin) * i / resolution;
+                    const y = rMin + (rMax - rMin) * j / resolution;
+                    let loss = func.loss(x, y);
+                    loss = Math.log(loss + 1); // Log scale
+                    points[i][j] = { x, y, z: loss };
+                    if (loss < minLoss) minLoss = loss;
+                    if (loss > maxLoss) maxLoss = loss;
+                }
+            }
+            
+            // 3D projection
+            function project(x, y, z) {
+                const normX = (x - rMin) / (rMax - rMin) - 0.5;
+                const normY = (y - rMin) / (rMax - rMin) - 0.5;
+                const normZ = (z - minLoss) / (maxLoss - minLoss) * 0.5;
+                
+                // Rotate
+                const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+                const cosZ = Math.cos(rotZ), sinZ = Math.sin(rotZ);
+                
+                const x1 = normX * cosZ - normY * sinZ;
+                const y1 = normX * sinZ + normY * cosZ;
+                const z1 = normZ;
+                
+                const x2 = x1;
+                const y2 = y1 * cosX - z1 * sinX;
+                const z2 = y1 * sinX + z1 * cosX;
+                
+                return {
+                    x: width/2 + x2 * scale * 2,
+                    y: height/2 - y2 * scale * 2,
+                    z: z2
+                };
+            }
+            
+            // Draw surface as wireframe with fill
+            const quads = [];
+            for (let i = 0; i < resolution; i++) {
+                for (let j = 0; j < resolution; j++) {
+                    const p1 = project(points[i][j].x, points[i][j].y, points[i][j].z);
+                    const p2 = project(points[i+1][j].x, points[i+1][j].y, points[i+1][j].z);
+                    const p3 = project(points[i+1][j+1].x, points[i+1][j+1].y, points[i+1][j+1].z);
+                    const p4 = project(points[i][j+1].x, points[i][j+1].y, points[i][j+1].z);
+                    const avgZ = (points[i][j].z + points[i+1][j].z + points[i+1][j+1].z + points[i][j+1].z) / 4;
+                    quads.push({ p1, p2, p3, p4, z: (p1.z + p2.z + p3.z + p4.z) / 4, avgZ });
+                }
+            }
+            
+            // Sort by depth
+            quads.sort((a, b) => a.z - b.z);
+            
+            // Draw quads
+            quads.forEach(q => {
+                ctx3D.beginPath();
+                ctx3D.moveTo(q.p1.x, q.p1.y);
+                ctx3D.lineTo(q.p2.x, q.p2.y);
+                ctx3D.lineTo(q.p3.x, q.p3.y);
+                ctx3D.lineTo(q.p4.x, q.p4.y);
+                ctx3D.closePath();
+                
+                ctx3D.fillStyle = getColor(q.avgZ, minLoss, maxLoss);
+                ctx3D.fill();
+                ctx3D.strokeStyle = 'rgba(255,255,255,0.1)';
+                ctx3D.lineWidth = 0.5;
+                ctx3D.stroke();
+            });
+            
+            // Draw current position on 3D
+            const currLoss = Math.log(func.loss(phi[0], phi[1]) + 1);
+            const currPos = project(phi[0], phi[1], currLoss);
+            
+            ctx3D.beginPath();
+            ctx3D.arc(currPos.x, currPos.y, 8, 0, Math.PI * 2);
+            ctx3D.fillStyle = '#00ff88';
+            ctx3D.shadowColor = '#00ff88';
+            ctx3D.shadowBlur = 20;
+            ctx3D.fill();
+            ctx3D.shadowBlur = 0;
+            
+            // Draw path on 3D
+            if (path.length > 1) {
+                ctx3D.beginPath();
+                ctx3D.strokeStyle = '#00d4ff';
+                ctx3D.lineWidth = 2;
+                
+                const p0Loss = Math.log(func.loss(path[0][0], path[0][1]) + 1);
+                const p0 = project(path[0][0], path[0][1], p0Loss);
+                ctx3D.moveTo(p0.x, p0.y);
+                
+                for (let i = 1; i < path.length; i++) {
+                    const pLoss = Math.log(func.loss(path[i][0], path[i][1]) + 1);
+                    const p = project(path[i][0], path[i][1], pLoss);
+                    ctx3D.lineTo(p.x, p.y);
+                }
+                ctx3D.stroke();
+            }
+        }
+        
+        // Update stats
+        function updateStats() {
+            const func = functions[currentFunction];
+            const loss = func.loss(phi[0], phi[1]);
+            const grad = func.gradient(phi[0], phi[1]);
+            const gradMag = Math.sqrt(grad[0]*grad[0] + grad[1]*grad[1]);
+            
+            document.getElementById('iterCount').textContent = path.length;
+            document.getElementById('lossValue').textContent = loss.toFixed(4);
+            document.getElementById('gradMag').textContent = gradMag.toFixed(4);
+            document.getElementById('phi0').textContent = phi[0].toFixed(4);
+            document.getElementById('phi1').textContent = phi[1].toFixed(4);
+            document.getElementById('grad0').textContent = grad[0].toFixed(4);
+            document.getElementById('grad1').textContent = grad[1].toFixed(4);
+        }
+        
+        // Gradient descent step
+        function step() {
+            const func = functions[currentFunction];
+            const lr = parseFloat(document.getElementById('learningRate').value);
+            const grad = func.gradient(phi[0], phi[1]);
+            
+            phi[0] = phi[0] - lr * grad[0];
+            phi[1] = phi[1] - lr * grad[1];
+            
+            // Clamp to range
+            const [rMin, rMax] = func.range;
+            phi[0] = Math.max(rMin, Math.min(rMax, phi[0]));
+            phi[1] = Math.max(rMin, Math.min(rMax, phi[1]));
+            
+            path.push([...phi]);
+        }
+        
+        // Animation loop
+        function animate() {
+            const maxIter = parseInt(document.getElementById('maxIter').value);
+            const speed = parseInt(document.getElementById('speed').value);
+            
+            if (!isRunning || path.length >= maxIter) {
+                isRunning = false;
+                return;
+            }
+            
+            step();
+            render();
+            
+            animationId = setTimeout(animate, speed);
+        }
+        
+        function render() {
+            setupCanvas(contourCanvas, ctx);
+            setupCanvas(surface3D, ctx3D);
+            drawContour();
+            draw3D();
+            updateStats();
+        }
+        
+        // Controls
+        function startGradientDescent() {
+            if (isRunning) return;
+            isRunning = true;
+            animate();
+        }
+        
+        function stepOnce() {
+            if (isRunning) return;
+            step();
+            render();
+        }
+        
+        function pauseResume() {
+            if (isRunning) {
+                isRunning = false;
+                clearTimeout(animationId);
+            } else {
+                isRunning = true;
+                animate();
+            }
+        }
+        
+        function reset() {
+            isRunning = false;
+            clearTimeout(animationId);
+            const func = functions[currentFunction];
+            const [rMin, rMax] = func.range;
+            phi = [rMin + (rMax - rMin) * 0.8, rMin + (rMax - rMin) * 0.8];
+            path = [[...phi]];
+            render();
+        }
+        
+        // Event listeners
+        document.getElementById('functionSelect').addEventListener('change', (e) => {
+            currentFunction = e.target.value;
+            document.getElementById('funcDisplay').textContent = e.target.options[e.target.selectedIndex].text;
+            reset();
+            
+            // Update explanation
+            const explanations = {
+                quadratic: '<strong>Quadratic (Convex):</strong> This is the simplest case - a bowl shape with a single global minimum. Gradient descent always converges to the minimum regardless of starting point.',
+                rosenbrock: '<strong>Rosenbrock (Non-Convex Valley):</strong> A classic test function with a narrow curved valley. Finding the valley is easy, but following it to the minimum [1,1] is slow due to the flat valley floor.',
+                rastrigin: '<strong>Rastrigin (Many Local Minima):</strong> Has many local minima due to cosine terms. Standard gradient descent often gets trapped. This is why we need techniques like SGD with noise!',
+                beale: '<strong>Beale (Flat Regions):</strong> Has flat regions where gradients are tiny, causing very slow progress. This motivates adaptive learning rates like Adam.'
+            };
+            document.getElementById('explanation').innerHTML = explanations[currentFunction];
+        });
+        
+        document.getElementById('learningRate').addEventListener('input', (e) => {
+            document.getElementById('lrDisplay').textContent = e.target.value;
+        });
+        
+        document.getElementById('speed').addEventListener('input', (e) => {
+            document.getElementById('speedDisplay').textContent = e.target.value + 'ms';
+        });
+        
+        document.getElementById('maxIter').addEventListener('input', (e) => {
+            document.getElementById('iterDisplay').textContent = e.target.value;
+        });
+        
+        // Click to set starting point
+        contourCanvas.addEventListener('click', (e) => {
+            const rect = contourCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const func = functions[currentFunction];
+            const [rMin, rMax] = func.range;
+            
+            phi = fromScreen(x, y, rect.width, rect.height, rMin, rMax);
+            path = [[...phi]];
+            isRunning = false;
+            clearTimeout(animationId);
+            render();
+        });
+        
+        // Initialize
+        window.addEventListener('resize', render);
+        reset();
+    </script>
+</body>
+</html>

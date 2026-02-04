@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Momentum & Adam Optimizer Comparison</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: #0d1117;
+            min-height: 100vh;
+            color: #c9d1d9;
+        }
+        
+        .container { max-width: 1500px; margin: 0 auto; padding: 1.5rem; }
+        
+        h1 {
+            text-align: center;
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            background: linear-gradient(135deg, #58a6ff, #a371f7, #f778ba);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle { text-align: center; color: #8b949e; margin-bottom: 1.5rem; font-size: 1rem; }
+        
+        .optimizer-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .optimizer-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .optimizer-header {
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #30363d;
+        }
+        
+        .optimizer-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        
+        .optimizer-name.gd { color: #58a6ff; }
+        .optimizer-name.momentum { color: #a371f7; }
+        .optimizer-name.adam { color: #f778ba; }
+        
+        .optimizer-badge {
+            font-size: 0.65rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+        
+        .optimizer-badge.gd { background: rgba(88, 166, 255, 0.15); color: #58a6ff; }
+        .optimizer-badge.momentum { background: rgba(163, 113, 247, 0.15); color: #a371f7; }
+        .optimizer-badge.adam { background: rgba(247, 120, 186, 0.15); color: #f778ba; }
+        
+        .optimizer-canvas {
+            width: 100%;
+            height: 280px;
+        }
+        
+        .optimizer-stats {
+            padding: 0.75rem 1rem;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        .stat-item { text-align: center; }
+        
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+        
+        .stat-value.gd { color: #58a6ff; }
+        .stat-value.momentum { color: #a371f7; }
+        .stat-value.adam { color: #f778ba; }
+        
+        .stat-label { font-size: 0.7rem; color: #8b949e; margin-top: 0.15rem; }
+        
+        .controls-panel {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+        }
+        
+        .controls-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.5rem;
+            align-items: end;
+        }
+        
+        .control-group { display: flex; flex-direction: column; gap: 0.4rem; }
+        
+        .control-label {
+            font-size: 0.8rem;
+            color: #8b949e;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .control-label span {
+            font-family: 'JetBrains Mono', monospace;
+            color: #58a6ff;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #30363d;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #58a6ff, #a371f7);
+            cursor: pointer;
+        }
+        
+        select {
+            width: 100%;
+            padding: 0.6rem;
+            border-radius: 6px;
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            font-family: inherit;
+            font-size: 0.85rem;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        
+        button {
+            padding: 0.6rem 1.25rem;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-start {
+            background: linear-gradient(135deg, #238636, #2ea043);
+            color: white;
+        }
+        
+        .btn-start:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(46, 160, 67, 0.3); }
+        
+        .btn-step { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; }
+        .btn-reset { background: rgba(248, 81, 73, 0.1); color: #f85149; border: 1px solid rgba(248, 81, 73, 0.3); }
+        
+        .info-panel {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+        
+        .info-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #58a6ff;
+            margin-bottom: 1rem;
+        }
+        
+        .algorithm-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+        
+        .algorithm-card {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 3px solid;
+        }
+        
+        .algorithm-card.gd { border-color: #58a6ff; }
+        .algorithm-card.momentum { border-color: #a371f7; }
+        .algorithm-card.adam { border-color: #f778ba; }
+        
+        .algorithm-card h4 {
+            font-size: 0.85rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .algorithm-card h4.gd { color: #58a6ff; }
+        .algorithm-card h4.momentum { color: #a371f7; }
+        .algorithm-card h4.adam { color: #f778ba; }
+        
+        .algorithm-card code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            display: block;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            color: #8b949e;
+        }
+        
+        .algorithm-card p {
+            font-size: 0.8rem;
+            color: #8b949e;
+            line-height: 1.5;
+        }
+        
+        @media (max-width: 1000px) {
+            .optimizer-grid { grid-template-columns: 1fr; }
+            .algorithm-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Optimizer Comparison: GD vs Momentum vs Adam</h1>
+        <p class="subtitle">Watch how different optimizers navigate the loss landscape</p>
+        
+        <div class="controls-panel">
+            <div class="controls-row">
+                <div class="control-group">
+                    <label class="control-label">Loss Function</label>
+                    <select id="functionSelect">
+                        <option value="elongated">Elongated Valley</option>
+                        <option value="saddle">Saddle Point</option>
+                        <option value="rosenbrock">Rosenbrock</option>
+                        <option value="beale">Beale Function</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Learning Rate (α) <span id="lrDisplay">0.01</span></label>
+                    <input type="range" id="learningRate" min="0.001" max="0.1" step="0.001" value="0.01">
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Momentum (β) <span id="betaDisplay">0.9</span></label>
+                    <input type="range" id="beta" min="0" max="0.99" step="0.01" value="0.9">
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Adam β₂ <span id="beta2Display">0.999</span></label>
+                    <input type="range" id="beta2" min="0.9" max="0.9999" step="0.0001" value="0.999">
+                </div>
+            </div>
+            <div class="button-group">
+                <button class="btn-start" onclick="startAll()">▶ Run All</button>
+                <button class="btn-step" onclick="stepAll()">Step Once</button>
+                <button class="btn-reset" onclick="resetAll()">↺ Reset</button>
+            </div>
+        </div>
+        
+        <div class="optimizer-grid">
+            <div class="optimizer-card">
+                <div class="optimizer-header">
+                    <span class="optimizer-name gd">Gradient Descent</span>
+                    <span class="optimizer-badge gd">Vanilla</span>
+                </div>
+                <canvas id="gdCanvas" class="optimizer-canvas"></canvas>
+                <div class="optimizer-stats">
+                    <div class="stat-item">
+                        <div class="stat-value gd" id="gdIter">0</div>
+                        <div class="stat-label">Iterations</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value gd" id="gdLoss">—</div>
+                        <div class="stat-label">Loss</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value gd" id="gdGrad">—</div>
+                        <div class="stat-label">|∇L|</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="optimizer-card">
+                <div class="optimizer-header">
+                    <span class="optimizer-name momentum">Momentum</span>
+                    <span class="optimizer-badge momentum">+ Velocity</span>
+                </div>
+                <canvas id="momentumCanvas" class="optimizer-canvas"></canvas>
+                <div class="optimizer-stats">
+                    <div class="stat-item">
+                        <div class="stat-value momentum" id="momIter">0</div>
+                        <div class="stat-label">Iterations</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value momentum" id="momLoss">—</div>
+                        <div class="stat-label">Loss</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value momentum" id="momGrad">—</div>
+                        <div class="stat-label">|∇L|</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="optimizer-card">
+                <div class="optimizer-header">
+                    <span class="optimizer-name adam">Adam</span>
+                    <span class="optimizer-badge adam">Adaptive</span>
+                </div>
+                <canvas id="adamCanvas" class="optimizer-canvas"></canvas>
+                <div class="optimizer-stats">
+                    <div class="stat-item">
+                        <div class="stat-value adam" id="adamIter">0</div>
+                        <div class="stat-label">Iterations</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value adam" id="adamLoss">—</div>
+                        <div class="stat-label">Loss</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value adam" id="adamGrad">—</div>
+                        <div class="stat-label">|∇L|</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="info-panel">
+            <div class="info-title">📐 Algorithm Update Rules</div>
+            <div class="algorithm-grid">
+                <div class="algorithm-card gd">
+                    <h4 class="gd">Gradient Descent</h4>
+                    <code>φ ← φ - α·∇L</code>
+                    <p>Simple: move opposite to gradient. Can oscillate in narrow valleys and get stuck in saddle points.</p>
+                </div>
+                <div class="algorithm-card momentum">
+                    <h4 class="momentum">Momentum</h4>
+                    <code>m ← β·m + (1-β)·∇L<br>φ ← φ - α·m</code>
+                    <p>Accumulates velocity in consistent directions. Smooths oscillations and can escape shallow local minima.</p>
+                </div>
+                <div class="algorithm-card adam">
+                    <h4 class="adam">Adam</h4>
+                    <code>m ← β₁·m + (1-β₁)·∇L<br>v ← β₂·v + (1-β₂)·∇L²<br>φ ← φ - α·m̂/√(v̂+ε)</code>
+                    <p>Adaptive learning rates per parameter. Combines momentum with RMSprop. Robust default choice.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Canvases
+        const gdCanvas = document.getElementById('gdCanvas');
+        const momCanvas = document.getElementById('momentumCanvas');
+        const adamCanvas = document.getElementById('adamCanvas');
+        const gdCtx = gdCanvas.getContext('2d');
+        const momCtx = momCanvas.getContext('2d');
+        const adamCtx = adamCanvas.getContext('2d');
+        
+        function setupCanvas(canvas, ctx) {
+            const rect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+        }
+        
+        // State
+        let currentFunc = 'elongated';
+        let isRunning = false;
+        let animationId = null;
+        
+        // Optimizer states
+        let gdState = { phi: [0, 0], path: [] };
+        let momState = { phi: [0, 0], m: [0, 0], path: [] };
+        let adamState = { phi: [0, 0], m: [0, 0], v: [0, 0], t: 0, path: [] };
+        
+        // Loss functions
+        const functions = {
+            elongated: {
+                loss: (x, y) => x*x + 10*y*y,
+                gradient: (x, y) => [2*x, 20*y],
+                range: [-3, 3],
+                start: [2.5, 2.5],
+                optimal: [0, 0]
+            },
+            saddle: {
+                loss: (x, y) => x*x - y*y,
+                gradient: (x, y) => [2*x, -2*y],
+                range: [-3, 3],
+                start: [0.1, 2.5],
+                optimal: [0, 0]
+            },
+            rosenbrock: {
+                loss: (x, y) => Math.pow(1-x, 2) + 100*Math.pow(y-x*x, 2),
+                gradient: (x, y) => [
+                    -2*(1-x) - 400*x*(y-x*x),
+                    200*(y-x*x)
+                ],
+                range: [-2, 2],
+                start: [-1.5, 1.5],
+                optimal: [1, 1]
+            },
+            beale: {
+                loss: (x, y) => Math.pow(1.5-x+x*y, 2) + Math.pow(2.25-x+x*y*y, 2) + Math.pow(2.625-x+x*y*y*y, 2),
+                gradient: (x, y) => {
+                    const t1 = 1.5-x+x*y, t2 = 2.25-x+x*y*y, t3 = 2.625-x+x*y*y*y;
+                    return [
+                        2*t1*(-1+y) + 2*t2*(-1+y*y) + 2*t3*(-1+y*y*y),
+                        2*t1*x + 2*t2*2*x*y + 2*t3*3*x*y*y
+                    ];
+                },
+                range: [-4, 4],
+                start: [-3, 3],
+                optimal: [3, 0.5]
+            }
+        };
+        
+        // Color map
+        function getColor(value, min, max) {
+            const t = Math.max(0, Math.min(1, (value - min) / (max - min)));
+            const r = Math.round(13 + t * 40);
+            const g = Math.round(17 + t * 20);
+            const b = Math.round(23 + t * 15);
+            return `rgb(${r},${g},${b})`;
+        }
+        
+        // Draw loss surface
+        function drawSurface(ctx, width, height, func, path, color, phiCurrent) {
+            const [rMin, rMax] = func.range;
+            const resolution = 80;
+            
+            // Compute losses
+            let minLoss = Infinity, maxLoss = -Infinity;
+            const losses = [];
+            
+            for (let i = 0; i < resolution; i++) {
+                losses[i] = [];
+                for (let j = 0; j < resolution; j++) {
+                    const x = rMin + (rMax - rMin) * i / resolution;
+                    const y = rMin + (rMax - rMin) * j / resolution;
+                    let loss = func.loss(x, y);
+                    loss = Math.log(Math.abs(loss) + 1);
+                    losses[i][j] = loss;
+                    if (loss < minLoss) minLoss = loss;
+                    if (loss > maxLoss) maxLoss = loss;
+                }
+            }
+            
+            // Draw heatmap
+            const cellW = width / resolution;
+            const cellH = height / resolution;
+            
+            for (let i = 0; i < resolution; i++) {
+                for (let j = 0; j < resolution; j++) {
+                    ctx.fillStyle = getColor(losses[i][j], minLoss, maxLoss);
+                    ctx.fillRect(i * cellW, (resolution - 1 - j) * cellH, cellW + 1, cellH + 1);
+                }
+            }
+            
+            // Draw contours
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+            ctx.lineWidth = 0.5;
+            const numContours = 12;
+            for (let c = 0; c < numContours; c++) {
+                const level = minLoss + (maxLoss - minLoss) * c / numContours;
+                drawContourLine(ctx, losses, level, resolution, width, height);
+            }
+            
+            // Draw path
+            if (path.length > 1) {
+                ctx.beginPath();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.globalAlpha = 0.8;
+                
+                const p0 = toScreen(path[0][0], path[0][1], width, height, rMin, rMax);
+                ctx.moveTo(p0.x, p0.y);
+                
+                for (let i = 1; i < path.length; i++) {
+                    const p = toScreen(path[i][0], path[i][1], width, height, rMin, rMax);
+                    ctx.lineTo(p.x, p.y);
+                }
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+                
+                // Draw path points
+                for (let i = 0; i < path.length; i++) {
+                    const p = toScreen(path[i][0], path[i][1], width, height, rMin, rMax);
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, i === path.length - 1 ? 0 : 2, 0, Math.PI * 2);
+                    ctx.fillStyle = color;
+                    ctx.globalAlpha = 0.5;
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                }
+            }
+            
+            // Draw current position
+            const pos = toScreen(phiCurrent[0], phiCurrent[1], width, height, rMin, rMax);
+            ctx.beginPath();
+            ctx.arc(pos.x, pos.y, 8, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 15;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            // Draw optimal point
+            const opt = toScreen(func.optimal[0], func.optimal[1], width, height, rMin, rMax);
+            ctx.beginPath();
+            ctx.arc(opt.x, opt.y, 5, 0, Math.PI * 2);
+            ctx.strokeStyle = '#ffd700';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+        
+        function drawContourLine(ctx, losses, level, resolution, width, height) {
+            const cellW = width / resolution;
+            const cellH = height / resolution;
+            
+            for (let i = 0; i < resolution - 1; i++) {
+                for (let j = 0; j < resolution - 1; j++) {
+                    const v00 = losses[i][j], v10 = losses[i+1][j];
+                    const v01 = losses[i][j+1], v11 = losses[i+1][j+1];
+                    
+                    const crossings = [];
+                    if ((v00 < level) !== (v10 < level)) {
+                        const t = (level - v00) / (v10 - v00);
+                        crossings.push([(i + t) * cellW, (resolution - 1 - j) * cellH]);
+                    }
+                    if ((v10 < level) !== (v11 < level)) {
+                        const t = (level - v10) / (v11 - v10);
+                        crossings.push([(i + 1) * cellW, (resolution - 1 - j - t) * cellH]);
+                    }
+                    if ((v01 < level) !== (v11 < level)) {
+                        const t = (level - v01) / (v11 - v01);
+                        crossings.push([(i + t) * cellW, (resolution - 1 - j - 1) * cellH]);
+                    }
+                    if ((v00 < level) !== (v01 < level)) {
+                        const t = (level - v00) / (v01 - v00);
+                        crossings.push([i * cellW, (resolution - 1 - j - t) * cellH]);
+                    }
+                    
+                    if (crossings.length >= 2) {
+                        ctx.beginPath();
+                        ctx.moveTo(crossings[0][0], crossings[0][1]);
+                        ctx.lineTo(crossings[1][0], crossings[1][1]);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+        
+        function toScreen(x, y, width, height, rMin, rMax) {
+            return {
+                x: (x - rMin) / (rMax - rMin) * width,
+                y: height - (y - rMin) / (rMax - rMin) * height
+            };
+        }
+        
+        // Optimizer steps
+        function stepGD() {
+            const func = functions[currentFunc];
+            const lr = parseFloat(document.getElementById('learningRate').value);
+            const grad = func.gradient(gdState.phi[0], gdState.phi[1]);
+            
+            gdState.phi[0] -= lr * grad[0];
+            gdState.phi[1] -= lr * grad[1];
+            
+            // Clamp
+            const [rMin, rMax] = func.range;
+            gdState.phi[0] = Math.max(rMin, Math.min(rMax, gdState.phi[0]));
+            gdState.phi[1] = Math.max(rMin, Math.min(rMax, gdState.phi[1]));
+            
+            gdState.path.push([...gdState.phi]);
+        }
+        
+        function stepMomentum() {
+            const func = functions[currentFunc];
+            const lr = parseFloat(document.getElementById('learningRate').value);
+            const beta = parseFloat(document.getElementById('beta').value);
+            const grad = func.gradient(momState.phi[0], momState.phi[1]);
+            
+            momState.m[0] = beta * momState.m[0] + (1 - beta) * grad[0];
+            momState.m[1] = beta * momState.m[1] + (1 - beta) * grad[1];
+            
+            momState.phi[0] -= lr * momState.m[0];
+            momState.phi[1] -= lr * momState.m[1];
+            
+            const [rMin, rMax] = func.range;
+            momState.phi[0] = Math.max(rMin, Math.min(rMax, momState.phi[0]));
+            momState.phi[1] = Math.max(rMin, Math.min(rMax, momState.phi[1]));
+            
+            momState.path.push([...momState.phi]);
+        }
+        
+        function stepAdam() {
+            const func = functions[currentFunc];
+            const lr = parseFloat(document.getElementById('learningRate').value);
+            const beta1 = parseFloat(document.getElementById('beta').value);
+            const beta2 = parseFloat(document.getElementById('beta2').value);
+            const epsilon = 1e-8;
+            
+            adamState.t++;
+            const grad = func.gradient(adamState.phi[0], adamState.phi[1]);
+            
+            // Update biased first moment
+            adamState.m[0] = beta1 * adamState.m[0] + (1 - beta1) * grad[0];
+            adamState.m[1] = beta1 * adamState.m[1] + (1 - beta1) * grad[1];
+            
+            // Update biased second moment
+            adamState.v[0] = beta2 * adamState.v[0] + (1 - beta2) * grad[0] * grad[0];
+            adamState.v[1] = beta2 * adamState.v[1] + (1 - beta2) * grad[1] * grad[1];
+            
+            // Bias correction
+            const mHat = [adamState.m[0] / (1 - Math.pow(beta1, adamState.t)),
+                         adamState.m[1] / (1 - Math.pow(beta1, adamState.t))];
+            const vHat = [adamState.v[0] / (1 - Math.pow(beta2, adamState.t)),
+                         adamState.v[1] / (1 - Math.pow(beta2, adamState.t))];
+            
+            // Update
+            adamState.phi[0] -= lr * mHat[0] / (Math.sqrt(vHat[0]) + epsilon);
+            adamState.phi[1] -= lr * mHat[1] / (Math.sqrt(vHat[1]) + epsilon);
+            
+            const [rMin, rMax] = func.range;
+            adamState.phi[0] = Math.max(rMin, Math.min(rMax, adamState.phi[0]));
+            adamState.phi[1] = Math.max(rMin, Math.min(rMax, adamState.phi[1]));
+            
+            adamState.path.push([...adamState.phi]);
+        }
+        
+        // Render
+        function render() {
+            const func = functions[currentFunc];
+            
+            setupCanvas(gdCanvas, gdCtx);
+            setupCanvas(momCanvas, momCtx);
+            setupCanvas(adamCanvas, adamCtx);
+            
+            const gdRect = gdCanvas.getBoundingClientRect();
+            const momRect = momCanvas.getBoundingClientRect();
+            const adamRect = adamCanvas.getBoundingClientRect();
+            
+            drawSurface(gdCtx, gdRect.width, gdRect.height, func, gdState.path, '#58a6ff', gdState.phi);
+            drawSurface(momCtx, momRect.width, momRect.height, func, momState.path, '#a371f7', momState.phi);
+            drawSurface(adamCtx, adamRect.width, adamRect.height, func, adamState.path, '#f778ba', adamState.phi);
+            
+            updateStats();
+        }
+        
+        function updateStats() {
+            const func = functions[currentFunc];
+            
+            const gdGrad = func.gradient(gdState.phi[0], gdState.phi[1]);
+            const momGrad = func.gradient(momState.phi[0], momState.phi[1]);
+            const adamGrad = func.gradient(adamState.phi[0], adamState.phi[1]);
+            
+            document.getElementById('gdIter').textContent = gdState.path.length;
+            document.getElementById('gdLoss').textContent = func.loss(gdState.phi[0], gdState.phi[1]).toFixed(3);
+            document.getElementById('gdGrad').textContent = Math.sqrt(gdGrad[0]*gdGrad[0] + gdGrad[1]*gdGrad[1]).toFixed(3);
+            
+            document.getElementById('momIter').textContent = momState.path.length;
+            document.getElementById('momLoss').textContent = func.loss(momState.phi[0], momState.phi[1]).toFixed(3);
+            document.getElementById('momGrad').textContent = Math.sqrt(momGrad[0]*momGrad[0] + momGrad[1]*momGrad[1]).toFixed(3);
+            
+            document.getElementById('adamIter').textContent = adamState.path.length;
+            document.getElementById('adamLoss').textContent = func.loss(adamState.phi[0], adamState.phi[1]).toFixed(3);
+            document.getElementById('adamGrad').textContent = Math.sqrt(adamGrad[0]*adamGrad[0] + adamGrad[1]*adamGrad[1]).toFixed(3);
+        }
+        
+        // Controls
+        function startAll() {
+            if (isRunning) {
+                isRunning = false;
+                return;
+            }
+            isRunning = true;
+            animate();
+        }
+        
+        function animate() {
+            if (!isRunning || gdState.path.length > 500) {
+                isRunning = false;
+                return;
+            }
+            
+            stepGD();
+            stepMomentum();
+            stepAdam();
+            render();
+            
+            animationId = setTimeout(animate, 30);
+        }
+        
+        function stepAll() {
+            if (isRunning) return;
+            stepGD();
+            stepMomentum();
+            stepAdam();
+            render();
+        }
+        
+        function resetAll() {
+            isRunning = false;
+            clearTimeout(animationId);
+            
+            const func = functions[currentFunc];
+            gdState = { phi: [...func.start], path: [[...func.start]] };
+            momState = { phi: [...func.start], m: [0, 0], path: [[...func.start]] };
+            adamState = { phi: [...func.start], m: [0, 0], v: [0, 0], t: 0, path: [[...func.start]] };
+            
+            render();
+        }
+        
+        // Event listeners
+        document.getElementById('functionSelect').addEventListener('change', (e) => {
+            currentFunc = e.target.value;
+            resetAll();
+        });
+        
+        document.getElementById('learningRate').addEventListener('input', (e) => {
+            document.getElementById('lrDisplay').textContent = e.target.value;
+        });
+        
+        document.getElementById('beta').addEventListener('input', (e) => {
+            document.getElementById('betaDisplay').textContent = e.target.value;
+        });
+        
+        document.getElementById('beta2').addEventListener('input', (e) => {
+            document.getElementById('beta2Display').textContent = e.target.value;
+        });
+        
+        window.addEventListener('resize', render);
+        
+        // Init
+        resetAll();
+    </script>
+</body>
+</html>
